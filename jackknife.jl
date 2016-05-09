@@ -6,16 +6,16 @@ function subsamples(sample::Vector)
     subsamples
 end
 
-subsample_means(estimator, sample) = map(estimator, subsamples(sample))
+subsample_means(estimator::Function, sample::Vector) = map(estimator, subsamples(sample))
 
-subsample_mean(estimator, sample) = mean(subsample_means(estimator, sample))
+subsample_mean(estimator::Function, sample::Vector) = mean(subsample_means(estimator, sample))
 
-function bias(estimator, sample)
+function bias(estimator::Function, sample::Vector)
   n = length(sample)
   (n-1)*(subsample_mean(estimator, sample) - estimator(sample))
 end
 
-function pseudovalues(estimator, sample)
+function pseudovalues(estimator::Function, sample::Vector)
   """Returns the jackknife pseudovalues"""
 
   n = length(sample)
@@ -23,7 +23,7 @@ function pseudovalues(estimator, sample)
   n*estimator(sample) - (n-1)*ss_means
 end
 
-function estimate(estimator, sample; with_subsample_mean=false)
+function estimate(estimator::Function, sample::Vector; with_subsample_mean::Bool=false)
   """Returns the jackknife estimate of the mean
 
   This is equal to the mean minus the jackknife estimate of the bias.
