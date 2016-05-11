@@ -25,7 +25,9 @@ jack_pseudo_vars = Vector{Float64}()
 λ = 1.
 ɛ = λ^2 * σ^2 / n_sample
 
+trans = identity; transinv = identity
 estimator(sample) = exp(λ * mean(sample))
+transestimator(sample) = trans(estimator(sample))
 normal = Distributions.Normal(μ, σ)
 sampler = n -> rand(normal, n)
 unbiased = estimator(λ * μ)
@@ -56,11 +58,11 @@ for irep in 1:n_replicas
   packetwise = packetwise_mean(packet_size, estimator, sample)
   push!(packetwises, packetwise)
 
-  jack_est = estimate(estimator, sample)
+  jack_est = transinv(estimate(transestimator, sample))
   push!(jack_ests, jack_est)
   push!(jack_ests_sq, jack_est^2)
 
-  pseudo = pseudovalues(estimator, sample)
+  pseudo = transinv(pseudovalues(transestimator, sample))
   jack_pseudo_mean = mean(pseudo)
   jack_pseudo_var = var(pseudo)
   push!(jack_pseudo_means, jack_pseudo_mean)
