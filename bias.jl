@@ -28,10 +28,10 @@ jack_pseudo_vars = Vector{Float64}()
 estimator(sample) = exp(λ * mean(sample))
 normal = Distributions.Normal(μ, σ)
 sampler = n -> rand(normal, n)
-expected = estimator(λ * μ)
-expected_bias = expected*(estimator(0.5*λ*σ^2/n_sample) - 1.)
+unbiased = estimator(λ * μ)
+theoretical_bias = unbiased*(estimator(0.5*λ*σ^2/n_sample) - 1.)
 
-expected_var_jack_est = expected^2 * (
+theoretical_var_jack_est = unbiased^2 * (
   (n_sample^3 * estimator(2*λ*σ^2/n_sample)
     - 2*n_sample^2*(n_sample-1)*estimator(0.5*λ*σ^2*(4*n_sample-3)/n_sample/(n_sample-1))
     + (n_sample-1)^3 * estimator(λ*σ^2*(2*n_sample-3)/(n_sample-1)^2)
@@ -42,9 +42,9 @@ expected_var_jack_est = expected^2 * (
     )^2
     )
 
-expected_packetwise_bias = expected*(estimator(0.5*λ*σ^2*packet_size/n_sample) - 1.)
-expected_ss_mean = exp(μ*λ + 0.5*σ^2*λ^2/(n_sample-1))
-expected_ss_mean_sq = exp(2*μ*λ + 2*σ^2*λ^2/(n_sample-1))/n_sample \
+theoretical_packetwise_bias = unbiased*(estimator(0.5*λ*σ^2*packet_size/n_sample) - 1.)
+theoretical_ss_mean = exp(μ*λ + 0.5*σ^2*λ^2/(n_sample-1))
+theoretical_ss_mean_sq = exp(2*μ*λ + 2*σ^2*λ^2/(n_sample-1))/n_sample \
         + exp(2*μ*λ+σ^2*λ^2*(2*n_sample-3)/(n_sample-1)^2)*(n_sample-1)/n_sample
 
 for irep in 1:n_replicas
@@ -69,52 +69,56 @@ end
 
 av_est = mean(ests)
 std_est = sqrt(var(ests))
-sigmas_est = abs(av_est - expected) / std_est
+std_av_est = std_est / sqrt(n_replicas)
+sigmas_est = abs(av_est - unbiased) / std_av_est
 
 av_packetwise = mean(packetwises)
 
 av_jack_est = mean(jack_ests)
 std_jack_est = sqrt(var(jack_ests))
-sigmas_jack_est = abs(av_jack_est - expected) / std_jack_est
+std_av_jack_est = std_jack_est / sqrt(n_replicas)
+sigmas_jack_est = abs(av_jack_est - unbiased) / std_av_jack_est
 
 av_jack_est_sq = mean(jack_ests_sq)
 
 av_jack_pseudo = mean(jack_pseudo_means)
 std_jack_pseudo = sqrt(mean(jack_pseudo_vars))
 
-printfmtln("ɛ                           = {:.4f}", ɛ)
+printfmtln("                             ɛ = {:.4f}", ɛ)
 
 println()
-printfmtln("expected value              = {:.4f}", expected)
-printfmtln("average estimator           = {:.4f} ± {:.4f} ({:.1f} sigma)", av_est, std_est, sigmas_est)
-printfmtln("variance average estimator  = {:.4e}", std_est^2)
+printfmtln("unbiased value                 = {:.4f}", unbiased)
 
-println()
-printfmtln("average jackknife estimator = {:.4f} ± {:.4f} ({:.1f} sigma)", av_jack_est, std_jack_est, sigmas_jack_est)
-#printfmtln("average jackknife squared   = {:.4f}", av_jack_est_sq)
-printfmtln("variance jackknife estimator= {:.4e}", std_jack_est^2)
-printfmtln("expected variance jackknife = {:.4e}", expected_var_jack_est)
+println("\nNAIVE ESTIMATORS")
+printfmtln("E[average estimator]           = {:.4f} ± {:.4f} ({:.1f} sigma)", av_est, std_av_est, sigmas_est)
+printfmtln("E[variance average estimator]  = {:.4e}", std_est^2)
 
-println()
-printfmtln("number of packets           = {}", n_packets)
-printfmtln("average packetwise mean     = {:.4f}", av_packetwise)
-printfmtln("average packetwise bias     = {:.4f}", av_packetwise - expected)
-printfmtln("expected packetwise bias    = {:.4e}", expected_packetwise_bias)
+println("\nJACKKNIFE ESTIMATORS")
+printfmtln("E[average jackknife]           = {:.4f} ± {:.4f} ({:.1f} sigma)", av_jack_est, std_av_jack_est, sigmas_jack_est)
+#printfmtln("average jackknife squared      = {:.4f}", av_jack_est_sq)
+printfmtln("E[variance jackknife]          = {:.4e}", std_jack_est^2)
+printfmtln("theoretical variance jackknife = {:.4e}", theoretical_var_jack_est)
 
-println()
-printfmtln("average jackknife pseudo    = {:.4f}", av_jack_pseudo)
-printfmtln("variance jackknife pseudo   = {:.4e}", std_jack_pseudo^2)
+println("\nPACKETWISE ESTIMATORS")
+printfmtln("number of packets              = {}", n_packets)
+printfmtln("E[average packetwise]          = {:.4f}", av_packetwise)
+printfmtln("E[average packetwise bias]     = {:.4f}", av_packetwise - unbiased)
+printfmtln("theoretical packetwise bias    = {:.4e}", theoretical_packetwise_bias)
 
-println()
-printfmtln("expected bias for normal est= {:.4e}", expected_bias)
-printfmtln("average normal est bias     = {:.4e}", av_est - expected)
-printfmtln("average jackknife bias      = {:.4e}", av_jack_est - expected)
+println("\nJACKKNIFE PSEUDOVALUE ESTIMATORS")
+printfmtln("E[average jackknife pseudo]    = {:.4f}", av_jack_pseudo)
+printfmtln("E[variance jackknife pseudo]   = {:.4e}", std_jack_pseudo^2)
+
+println("\nBIASES")
+printfmtln("theoretical bias for naive est = {:.4e}", theoretical_bias)
+printfmtln("E[naive est bias]              = {:.4e}", av_est - unbiased)
+printfmtln("E[jackknife bias]              = {:.4e}", av_jack_est - unbiased)
 
 println()
 printfmtln("BIAS DIAGNOSTICS")
 bias_estimate = av_jack_est - av_est
 printfmtln("average - jackknife         = {:.4f}", bias_estimate)
-printfmtln("jackknife standard error    = {:.4f}", std_jack_est)
+printfmtln("jackknife standard error    = {:.4f}", std_av_jack_est)
 diagnostics = abs(bias_estimate/std_jack_est)
 printfmtln("bias estimate/standard error= {:.4e}", diagnostics)
 if diagnostics < 1.
