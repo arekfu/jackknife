@@ -87,24 +87,38 @@ printfmtln("ɛ                           = {:.4f}", ɛ)
 println()
 printfmtln("expected value              = {:.4f}", expected)
 printfmtln("average estimator           = {:.4f} ± {:.4f} ({:.1f} sigma)", av_est, std_est, sigmas_est)
-printfmtln("variance average estimator  = {:.4f}", std_est^2)
+printfmtln("variance average estimator  = {:.4e}", std_est^2)
 
 println()
 printfmtln("average jackknife estimator = {:.4f} ± {:.4f} ({:.1f} sigma)", av_jack_est, std_jack_est, sigmas_jack_est)
-printfmtln("variance jackknife estimator= {:.4f}", std_jack_est^2)
-printfmtln("expected variance jackknife = {:.4f}", expected_var_jack_est)
-printfmtln("average jackknife squared   = {:.4f}", av_jack_est_sq)
+#printfmtln("average jackknife squared   = {:.4f}", av_jack_est_sq)
+printfmtln("variance jackknife estimator= {:.4e}", std_jack_est^2)
+printfmtln("expected variance jackknife = {:.4e}", expected_var_jack_est)
 
 println()
+printfmtln("number of packets           = {}", n_packets)
 printfmtln("average packetwise mean     = {:.4f}", av_packetwise)
 printfmtln("average packetwise bias     = {:.4f}", av_packetwise - expected)
 printfmtln("expected packetwise bias    = {:.4e}", expected_packetwise_bias)
 
 println()
 printfmtln("average jackknife pseudo    = {:.4f}", av_jack_pseudo)
-printfmtln("variance jackknife pseudo   = {:.4f}", std_jack_pseudo^2)
+printfmtln("variance jackknife pseudo   = {:.4e}", std_jack_pseudo^2)
 
 println()
 printfmtln("expected bias for normal est= {:.4e}", expected_bias)
 printfmtln("average normal est bias     = {:.4e}", av_est - expected)
 printfmtln("average jackknife bias      = {:.4e}", av_jack_est - expected)
+
+println()
+printfmtln("BIAS DIAGNOSTICS")
+bias_estimate = av_jack_est - av_est
+printfmtln("average - jackknife         = {:.4f}", bias_estimate)
+printfmtln("jackknife standard error    = {:.4f}", std_jack_est)
+diagnostics = abs(bias_estimate/std_jack_est)
+printfmtln("bias estimate/standard error= {:.4e}", diagnostics)
+if diagnostics < 1.
+  println(" ... bias is smaller than standard error ...")
+else
+  println(" !!! bias is larger than standard error !!!")
+end
