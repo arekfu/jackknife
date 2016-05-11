@@ -23,7 +23,7 @@ jack_pseudo_vars = Vector{Float64}()
 μ = 0.
 σ = 1.
 λ = 1.
-ɛ = λ * σ / sqrt(n_sample)
+ɛ = λ^2 * σ^2 / n_sample
 
 estimator(sample) = exp(λ * mean(sample))
 normal = Distributions.Normal(μ, σ)
