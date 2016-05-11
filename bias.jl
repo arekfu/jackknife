@@ -25,7 +25,12 @@ jack_pseudo_vars = Vector{Float64}()
 λ = 1.
 ɛ = λ^2 * σ^2 / n_sample
 
-trans = identity; transinv = identity
+#trans = identity; transinv = identity
+c1 = 1.
+c2 = 3.
+trans = x -> c1 + c2*log(x); transinv = y -> exp((y-c1)/c2)
+#trans = log; transinv = exp
+#trans = sqrt; transinv = y -> y.^2
 estimator(sample) = exp(λ * mean(sample))
 transestimator(sample) = trans(estimator(sample))
 normal = Distributions.Normal(μ, σ)
